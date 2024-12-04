@@ -6,24 +6,11 @@
 /*   By: vimafra- <vimafra-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/21 13:55:39 by vimafra-          #+#    #+#             */
-/*   Updated: 2024/12/04 09:17:09 by vimafra-         ###   ########.fr       */
+/*   Updated: 2024/12/04 13:58:32 by vimafra-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
-
-int	ft_strlen(char *str)
-{
-	int	len;
-
-	len = 0;
-	while (*str)
-	{
-		str++;
-		len++;
-	}
-	return (len);
-}
 
 int	find_eol(char *s)
 {
@@ -58,9 +45,6 @@ char    *substr(char *s, unsigned int end)
 
 int line_checker(char *s)
 {
-    t_list  *lst;
-    t_list  *new;
-
     if (find_eol(s) == (ft_strlen(s) - 1)) // Se a quebra de linha for o último caracter do buffer
         return (1);
     if (find_eol(s) == -1) // Se não tiver \n
@@ -76,34 +60,35 @@ char *get_next_line(int fd)
     char    *gnl_buffer;
     int read_status;
     static char    *temp;
-    t_list  *lst;
-    t_list  *new;
-    t_list  *last;
+    char *result;
 
-    lst = NULL;
     if (fd == -1 || BUFFER_SIZE == 0)
         return (NULL);
-    // if(temp[0] != '\0')
-    // {
-    //     if (line_checker(temp) == 1)
-    //         return (temp);
-    //     if (line_checker(temp) == 2)
-    //     {
-    //         new = ft_lstnew(temp);
-    //         if (new == NULL)
-    //             return (NULL);
-    //         ft_lstadd_back(&lst, new);
-    //         free(new);
-    //     }
-    //     if (line_checker(temp) == 3)
-    //     {
-    //         new = ft_lstnew(substr(temp, find_eol(temp)));
-    //         if (new == NULL)
-    //             return (NULL);
-    //         temp = temp + (find_eol(temp) + 1);
-    //         return (new->content);
-    //     }
-    // }
+    result = NULL;
+    if(temp[0] != '\0')
+    {
+        if (line_checker(temp) == 1)
+        {
+            result = ft_strjoin(result, temp);
+            if (result == NULL)
+                return (NULL);
+            return (result);
+        }
+        if (line_checker(temp) == 2)
+        {
+            result = ft_strjoin(result, temp);
+            if (result == NULL)
+                return (NULL);   
+        }
+        if (line_checker(temp) == 3)
+        {
+            result = ft_strjoin(result, substr(temp, find_eol(temp)));
+            if (result == NULL)
+                return (NULL);
+            temp = temp + (find_eol(temp) + 1);
+            return (result);
+        }
+    }
     gnl_buffer = (char *)malloc(BUFFER_SIZE * sizeof(char));
     if (gnl_buffer == NULL)
         return (NULL);
@@ -112,33 +97,38 @@ char *get_next_line(int fd)
          return (NULL);
     while (line_checker(gnl_buffer) == 2) // Acho que precisa checar isso primeiro pq é o único que vai precisar ficar relendo e preenchendo a lista
     {
-        new = ft_lstnew(gnl_buffer);
-        if (new == NULL)
+        result = ft_strjoin(result, gnl_buffer);
+        if (result == NULL)
             return (NULL);
-        ft_lstadd_back(&lst, new);
+        set_null(gnl_buffer);
         read_status = read(fd, gnl_buffer, BUFFER_SIZE);
         if (read_status == -1 || read_status == 0)
             return (NULL);
     }
-
-    // if (line_checker(gnl_buffer) == 1)
-    //         return (gnl_buffer);
-    // if (line_checker(gnl_buffer) == 3)
-    // {
-    //     new = ft_lstnew(substr(gnl_buffer, find_eol(gnl_buffer)));
-    //     if (new == NULL)
-    //         return (NULL);
-    //     temp = gnl_buffer + (find_eol(gnl_buffer) + 1);
-    // }
+    if (line_checker(gnl_buffer) == 1)
+    {
+            result = ft_strjoin(result, gnl_buffer);
+            if (result == NULL)
+                return (NULL);
+    }
+    if (line_checker(gnl_buffer) == 3)
+    {
+        result = ft_strjoin(result, substr(gnl_buffer, find_eol(gnl_buffer)));
+        if (result == NULL)
+                return (NULL);
+        temp = gnl_buffer + (find_eol(gnl_buffer) + 1);
+        printf("temp = %s\n", temp);
+    }
     
-    
-    return ("ok");
+    return (result);
 }
 
 int main(void)
 {
     int fd = open("../teste_gnl.txt", O_RDONLY);
-    get_next_line(fd);
+    printf("RETORNO = %s", get_next_line(fd));
+    printf("RETORNO = %s", get_next_line(fd));
+    //printf("RETORNO = %s", get_next_line(fd));
     //get_next_line(fd);
     return (0);
 }
