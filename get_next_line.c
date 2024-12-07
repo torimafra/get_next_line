@@ -5,130 +5,121 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: vimafra- <vimafra-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/11/21 13:55:39 by vimafra-          #+#    #+#             */
-/*   Updated: 2024/12/04 13:58:32 by vimafra-         ###   ########.fr       */
+/*   Created: 2024/12/04 13:59:28 by vimafra-          #+#    #+#             */
+/*   Updated: 2024/12/07 18:06:28 by vimafra-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
 
-int	find_eol(char *s)
+char    *ft_strdup(char *s)
 {
-	int	i;
+    char *result;
+    int i;
 
     i = 0;
-	while (s[i] != '\0')
-	{
-		if (s[i] == '\n')
-			return (i);
-		i++;
-	}
-	return (-1);
-}
-
-char    *substr(char *s, unsigned int end)
-{
-    char    *result;
-    unsigned int	i;
-
-    i = 0;
-	result = (char *)malloc((end + 1) * sizeof(char));
-    if (result == NULL)
-        return (NULL);
-    while (s[i] != '\0' && i <= end)
-	{
-		result[i] = s[i];
-		i++;
-	}
-	return (result);
-}
-
-int line_checker(char *s)
-{
-    if (find_eol(s) == (ft_strlen(s) - 1)) // Se a quebra de linha for o último caracter do buffer
-        return (1);
-    if (find_eol(s) == -1) // Se não tiver \n
-        return (2);
-    if (find_eol(s) != -1) // Se tiver quebra de linha no buffer
-        return (3);
-    return (0);
-
+    result = (char *)malloc((ft_strlen(s) + 1) * sizeof(char));
+    while (s[i] != '\0')
+    {
+        result[i] = s[i];
+        i++;
+    }
+    result[i] = '\0';
+    return (result);
 }
 
 char *get_next_line(int fd)
 {
-    char    *gnl_buffer;
+    char    *buffer = {NULL};
+    char    *result = {NULL};
+    static char    *cache = {NULL};
+    char    **middle_break;
     int read_status;
-    static char    *temp;
-    char *result;
 
-    if (fd == -1 || BUFFER_SIZE == 0)
+    if (fd <= 0 || BUFFER_SIZE <= 0)
         return (NULL);
-    result = NULL;
-    if(temp[0] != '\0')
+    if (cache)
     {
-        if (line_checker(temp) == 1)
+        if (line_checker(cache) == 1)
         {
-            result = ft_strjoin(result, temp);
-            if (result == NULL)
-                return (NULL);
+            result = ft_strjoin(result, cache);
+            free(cache);
             return (result);
         }
-        if (line_checker(temp) == 2)
+        if (line_checker(cache) == 2)
         {
-            result = ft_strjoin(result, temp);
-            if (result == NULL)
-                return (NULL);   
+            result = ft_strjoin(result, cache);
+            free(cache);
         }
-        if (line_checker(temp) == 3)
+        if (line_checker(cache) == 3)
         {
-            result = ft_strjoin(result, substr(temp, find_eol(temp)));
-            if (result == NULL)
+            middle_break = ft_split(cache);
+            if (middle_break == NULL)
                 return (NULL);
-            temp = temp + (find_eol(temp) + 1);
-            return (result);
+            cache = ft_strdup(middle_break[1]);
+            free(cache);
+            return (middle_break[0]);
         }
     }
-    gnl_buffer = (char *)malloc(BUFFER_SIZE * sizeof(char));
-    if (gnl_buffer == NULL)
+    buffer = (char *)malloc((BUFFER_SIZE + 1) * sizeof(char));
+    if (buffer == NULL)
         return (NULL);
-    read_status = read(fd, gnl_buffer, BUFFER_SIZE);
-     if (read_status == -1 || read_status == 0)
-         return (NULL);
-    while (line_checker(gnl_buffer) == 2) // Acho que precisa checar isso primeiro pq é o único que vai precisar ficar relendo e preenchendo a lista
+    read_status = read(fd, buffer, BUFFER_SIZE);
+    if (read_status <= 0)
     {
-        result = ft_strjoin(result, gnl_buffer);
+        free(buffer);
+        return (NULL);
+    }
+    buffer[read_status] = '\0';
+    while (line_checker(buffer) == 2)
+    {
+        //printf("1\n");
+        result = ft_strjoin(result, buffer);
         if (result == NULL)
             return (NULL);
-        set_null(gnl_buffer);
-        read_status = read(fd, gnl_buffer, BUFFER_SIZE);
-        if (read_status == -1 || read_status == 0)
-            return (NULL);
+        read_status = read(fd, buffer, BUFFER_SIZE);
+        buffer[read_status] = '\0';
+        //printf("buffer = %s\n", buffer);
     }
-    if (line_checker(gnl_buffer) == 1)
+    if (line_checker(buffer) == 1)
     {
-            result = ft_strjoin(result, gnl_buffer);
-            if (result == NULL)
-                return (NULL);
-    }
-    if (line_checker(gnl_buffer) == 3)
-    {
-        result = ft_strjoin(result, substr(gnl_buffer, find_eol(gnl_buffer)));
+        //printf("2\n");
+        result = ft_strjoin(result, buffer);
         if (result == NULL)
-                return (NULL);
-        temp = gnl_buffer + (find_eol(gnl_buffer) + 1);
-        printf("temp = %s\n", temp);
+            return (free(buffer), NULL);
+        
     }
-    
+    if (line_checker(buffer) == 3)
+    {
+        //printf("3\n");
+        middle_break = ft_split(buffer); 
+        if (middle_break == NULL)
+            return (NULL);
+        result = ft_strjoin(result, middle_break[0]);
+        if (result == NULL)
+            return (NULL);
+        free(middle_break[0]);
+        cache = ft_strdup(middle_break[1]);
+        free(middle_break[1]);
+        free(middle_break);
+    }
+    else
+        free(buffer);
     return (result);
 }
 
 int main(void)
 {
+    // char    *s;
+    // if (*s == '\0')
+    //     //printf("sim\n");
     int fd = open("../teste_gnl.txt", O_RDONLY);
-    printf("RETORNO = %s", get_next_line(fd));
-    printf("RETORNO = %s", get_next_line(fd));
-    //printf("RETORNO = %s", get_next_line(fd));
-    //get_next_line(fd);
+    char *line = get_next_line(fd);
+    
+    printf("RETORNO = %s", line);
+    free(line);
+    ////printf("%s", get_next_line(fd));
+    // //printf("%s", get_next_line(fd));
+    // //printf("%s", get_next_line(fd));
     return (0);
 }

@@ -6,7 +6,7 @@
 /*   By: vimafra- <vimafra-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/23 16:50:35 by vimafra-          #+#    #+#             */
-/*   Updated: 2024/12/04 17:26:03 by vimafra-         ###   ########.fr       */
+/*   Updated: 2024/12/07 18:00:40 by vimafra-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,15 +14,12 @@
 
 int	ft_strlen(char *str)
 {
-	int	len;
+	int	i;
 
-	len = 0;
-	while (*str)
-	{
-		str++;
-		len++;
-	}
-	return (len);
+	i = 0;
+	while (str[i] != '\0')
+		i++;
+	return (i);
 }
 
 int line_checker(char *s)
@@ -30,6 +27,8 @@ int line_checker(char *s)
     int i;
 
     i = 0;
+    if (!s)
+        return (0);
     while (s[i] != '\0')
     {
         if (s[i] == '\n')
@@ -47,21 +46,28 @@ int line_checker(char *s)
 
 char *ft_strjoin(char *a, char *b)
 {
-    int i;
-    int j;
+    int i = {0};
+    int j = {0};
     char    *result;
 
-    i = 0;
-    j = 0;
-    if (a[i] == '\0' && b[j] == '\0')
-        return (NULL);
-    result = (char *)malloc((ft_strlen(a) + ft_strlen(b) + 1) * sizeof(char));
+    if(!b)
+        b = "";
+    if (!a)
+    {
+        result = (char *)malloc((ft_strlen(b) + 1) * sizeof(char));
+    }
+    else
+        result = (char *)malloc((ft_strlen(a) + ft_strlen(b) + 1) * sizeof(char));
     if (result == NULL)
         return (NULL);
-    while (a[i] != '\0')
+    if (a)
     {
-        result[i] = a[i];
-        i++;
+        while (a[i] != '\0')
+        {
+            result[i] = a[i];
+            i++;
+        }
+        free(a);
     }
     while (b[j] != '\0')
     {
@@ -118,10 +124,21 @@ char **ft_split(char *str)
     result[0] = (char *)malloc((i + 2) * sizeof(char));
     if (result[0] == NULL)
         return (NULL);
-    result[1] = (char *)malloc((ft_strlen(str) - 1) * sizeof(char));
+    result[1] = (char *)malloc((ft_strlen(str) + 1) * sizeof(char));
     if (result[1] == NULL)
         return (NULL);
     ft_strcpy(str, result[0], 0);
     ft_strcpy(str, result[1], 1);
+    free(str);
     return (result);
 }
+
+// int main(void)
+// {
+//     char    *s;
+
+//     if (!s)
+//         printf("vazio\n");
+//     //printf("%d\n", ft_strlen(s));
+//     return (0);
+// }
