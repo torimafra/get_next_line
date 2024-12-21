@@ -6,120 +6,203 @@
 /*   By: vimafra- <vimafra-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/04 13:59:28 by vimafra-          #+#    #+#             */
-/*   Updated: 2024/12/07 18:06:28 by vimafra-         ###   ########.fr       */
+/*   Updated: 2024/12/21 15:14:32 by vimafra-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
 
-char    *ft_strdup(char *s)
+int	ft_split(char **str, char **result, char **cache)
 {
-    char *result;
-    int i;
+	int		i;
+    char *temp_result;
+    char *temp_cache;
 
     i = 0;
-    result = (char *)malloc((ft_strlen(s) + 1) * sizeof(char));
-    while (s[i] != '\0')
+	while (str[0][i] != '\n' && str[0][i] != '\0')
+		i++;
+	temp_result = (char *)ft_calloc((i + 2), sizeof(char));
+	if (!temp_result)
+		return (0);
+	temp_cache = ft_calloc((strcounter(*str, '\0') + 1), sizeof(char));
+	if (!temp_cache)
+		return (0);
+	strchrcopy(*str, temp_result, '\n', 0);
+	strchrcopy(*str, temp_cache, '\n', 1);
+    free(*str);
+    *str = NULL;
+    *result = ft_strjoin(*result, temp_result);
+    if (!*result)
+        return (free(temp_result), 0);
+    *cache = ft_strdup(temp_cache);
+    //printf("THE CULPRIT = %p\n", *cache);
+    if (!*cache)
+        return (free(temp_cache), 0);
+    return (free(temp_cache), free(temp_result), 1);
+}
+
+char *create_buffer(int fd, char **result)
+{
+    char *buffer;
+    int read_status;
+    
+    buffer = ft_calloc((BUFFER_SIZE + 1), sizeof(char));
+    if (buffer == NULL)
+        return (NULL);
+    read_status = read(fd, buffer, BUFFER_SIZE);
+    if (read_status < 0)
+        return (free(buffer), NULL);
+    if (read_status == 0)
     {
-        result[i] = s[i];
-        i++;
+        if (result)
+            return (free(buffer), *result);
+        else
+            return (free(buffer), NULL);
     }
-    result[i] = '\0';
-    return (result);
+    buffer[read_status] = '\0';
+    return (buffer);
+}
+
+// int	line_checker(char **str, char **result, char **cache) //cache, result, cache
+// {
+// 	int	i;
+// 	int status;
+
+//     if (!*str)
+// 		return (0);
+// 	i = strcounter(*str, '\n');
+//     //printf("I CHECKER = %d\n", i);
+//     //printf("STRCOUNTER CHECKER = %d\n", (strcounter(*str, '\0')));
+// 	if (i == (strcounter(*str, '\0') - 1) || i == strcounter(*str, '\0'))
+// 	{
+//         //printf("VERIFICAR PTR = %p\n", *str);
+//         *result = ft_strjoin(*result, *str);
+//         //printf("STR PTR = %p\n", *str);
+//         //printf("STR = %s\n", *str);
+//         if (!*result)
+//         {
+//             //printf("AAA\n");
+//             return (free(*str), 0);
+//         }
+// 		if (i == (strcounter(*str, '\0') - 1))
+//         {
+// 			//printf("BBB\n");
+//             return (*cache = NULL, 1);
+//         }
+// 		if (i == strcounter(*str, '\0'))
+//         {
+// 			//printf("CCC\n");
+//             //printf("STR = %s\n", *str);
+//             if (&*str == &*cache)
+//                 free(*str);
+//             return (*cache = NULL, 2);
+//         }
+// 	}
+// 	if (i < (strcounter(*str, '\0') - 1))
+// 	{
+// 		 status = ft_split(str, result, cache);
+//         if (status == 0)
+//             return (0);
+//         return (3);
+// 	}
+// 	return (0);
+// }
+
+int	line_checker(char **str, char **result, char **cache) //cache, result, cache
+{
+	int	i;
+	int status;
+    int check;
+
+    if (!*str)
+		return (0);
+	i = strcounter(*str, '\n');
+
+	if (i == (strcounter(*str, '\0') - 1) || i == strcounter(*str, '\0'))
+	{
+        if (i == (strcounter(*str, '\0') - 1))
+            check = 1;
+		if (i == strcounter(*str, '\0'))
+            check = 2;
+        *result = ft_strjoin(*result, *str);
+        if (!*result)
+            return (free(*str), 0);
+        // if (&*str == &*cache)
+        //     free(*str);
+        return (*cache = NULL, check);	
+	}
+	if (i < (strcounter(*str, '\0') - 1))
+	{
+		 status = ft_split(str, result, cache);
+        if (status == 0)
+            return (0);
+        return (3);
+	}
+	return (0);
+}
+
+
+char *buffer_handler(int fd, char **result, char **cache)
+{
+    char *buffer;
+    int status;
+    int read_status;
+
+    buffer = create_buffer(fd, result);
+     if (!buffer)
+        return (NULL);
+    if (buffer[0] == '\0')
+        return (free(buffer), *result); 
+    status = line_checker(&buffer, result, cache);
+    if (status == 0)
+        return (NULL);
+    while (status == 2)
+    {
+        read_status = read(fd, buffer, BUFFER_SIZE);
+        if (read_status < 0)
+                return (free(buffer), NULL);
+        buffer[read_status] = '\0';
+        status = line_checker(&buffer, result, cache);
+    }
+    return (free(buffer), *result);
 }
 
 char *get_next_line(int fd)
 {
-    char    *buffer = {NULL};
-    char    *result = {NULL};
+    char    *result;
     static char    *cache = {NULL};
-    char    **middle_break;
-    int read_status;
+    int status;
 
-    if (fd <= 0 || BUFFER_SIZE <= 0)
+    result = NULL;
+    if (fd < 0 || BUFFER_SIZE <= 0)
         return (NULL);
     if (cache)
     {
-        if (line_checker(cache) == 1)
-        {
-            result = ft_strjoin(result, cache);
-            free(cache);
+        status = line_checker(&cache, &result, &cache);
+        if (status == 0)
+            return (NULL);
+        if (status == 1 || status == 3)
             return (result);
-        }
-        if (line_checker(cache) == 2)
-        {
-            result = ft_strjoin(result, cache);
-            free(cache);
-        }
-        if (line_checker(cache) == 3)
-        {
-            middle_break = ft_split(cache);
-            if (middle_break == NULL)
-                return (NULL);
-            cache = ft_strdup(middle_break[1]);
-            free(cache);
-            return (middle_break[0]);
-        }
     }
-    buffer = (char *)malloc((BUFFER_SIZE + 1) * sizeof(char));
-    if (buffer == NULL)
-        return (NULL);
-    read_status = read(fd, buffer, BUFFER_SIZE);
-    if (read_status <= 0)
-    {
-        free(buffer);
-        return (NULL);
-    }
-    buffer[read_status] = '\0';
-    while (line_checker(buffer) == 2)
-    {
-        //printf("1\n");
-        result = ft_strjoin(result, buffer);
-        if (result == NULL)
-            return (NULL);
-        read_status = read(fd, buffer, BUFFER_SIZE);
-        buffer[read_status] = '\0';
-        //printf("buffer = %s\n", buffer);
-    }
-    if (line_checker(buffer) == 1)
-    {
-        //printf("2\n");
-        result = ft_strjoin(result, buffer);
-        if (result == NULL)
-            return (free(buffer), NULL);
-        
-    }
-    if (line_checker(buffer) == 3)
-    {
-        //printf("3\n");
-        middle_break = ft_split(buffer); 
-        if (middle_break == NULL)
-            return (NULL);
-        result = ft_strjoin(result, middle_break[0]);
-        if (result == NULL)
-            return (NULL);
-        free(middle_break[0]);
-        cache = ft_strdup(middle_break[1]);
-        free(middle_break[1]);
-        free(middle_break);
-    }
-    else
-        free(buffer);
+    result = buffer_handler(fd, &result, &cache);
     return (result);
 }
 
-int main(void)
-{
-    // char    *s;
-    // if (*s == '\0')
-    //     //printf("sim\n");
-    int fd = open("../teste_gnl.txt", O_RDONLY);
-    char *line = get_next_line(fd);
-    
-    printf("RETORNO = %s", line);
-    free(line);
-    ////printf("%s", get_next_line(fd));
-    // //printf("%s", get_next_line(fd));
-    // //printf("%s", get_next_line(fd));
-    return (0);
-}
+// int main(void)
+// {
+// 	int fd = open("../teste_gnl.txt", O_RDONLY);
+//     printf("FD = %d\n", fd);
+//     // char *line01 = get_next_line(fd);
+//     // char *line02 = get_next_line(fd);
+//     //char *line03 = get_next_line(fd);
+//     // char *line04 = get_next_line(fd);
+
+//     //printf("RETORNO = %s", line01);
+//     //printf("RETORNO = %s", line02);
+//     ////printf("RETORNO = %s", line03);
+//     // //printf("RETORNO = %s", line04);
+//     // free(line01);
+//     // free(line02);
+//     //free(line03);
+// 	return (0);
+// }
