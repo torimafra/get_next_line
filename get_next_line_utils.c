@@ -6,7 +6,7 @@
 /*   By: vimafra- <vimafra-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/23 16:50:35 by vimafra-          #+#    #+#             */
-/*   Updated: 2024/12/21 15:14:26 by vimafra-         ###   ########.fr       */
+/*   Updated: 2025/01/04 17:16:47 by vimafra-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,9 +24,9 @@ int	strcounter(char *str, char c)
 
 void	*ft_calloc(size_t nmemb, size_t size)
 {
-	void	*ptr;
-	unsigned char *temp;
-	size_t	i;
+	unsigned char	*temp;
+	void			*ptr;
+	size_t			i;
 
 	i = 0;
 	if (nmemb == 0 || size == 0)
@@ -57,8 +57,6 @@ char	*ft_strdup(char *s)
 		result[i] = s[i];
 		i++;
 	}
-	result[i] = '\0';
-	//printf("S PTR = %p\n", s);
 	return (result);
 }
 
@@ -90,33 +88,29 @@ void	strchrcopy(char *src, char *dest, char c, int type)
 	}
 }
 
-char	*ft_strjoin(char *a, char *b)
+char	*ft_strjoin(char **a, char *b)
 {
 	char	*result;
+	int		len_a;
+	int		len_b;
 
-	if (!a && !b)
+	if (!*a && !b)
 		return (NULL);
-	if (!a && b)
+	if (!*a && b)
 	{
 		result = ft_strdup(b);
 		if (!result)
 			return (NULL);
 		return (result);
 	}
-	if (a && !b)
-	{
-		result = ft_strdup(a);
-		if (!result)
-			return (NULL);
-		return (result);
-	}
-	result = ft_calloc((strcounter(a, '\0') + strcounter(b, '\0') + 1), sizeof(char));
+	len_a = strcounter(*a, '\0');
+	len_b = strcounter(b, '\0');
+	result = ft_calloc((len_a + len_b + 1), sizeof(char));
 	if (result == NULL)
 		return (NULL);
-	strchrcopy(a, result, '\0', 0);
-	strchrcopy(b, (result + strcounter(a, '\0')), '\0', 0);
-	result[strcounter(a, '\0') + strcounter(b, '\0')] = '\0';
-	//printf("A PTR = %p\n", a);
-	free(a);
-	return (result);
+	strchrcopy(*a, result, '\0', 0);
+	strchrcopy(b, (result + strcounter(*a, '\0')), '\0', 0);
+	result[strcounter(*a, '\0') + strcounter(b, '\0')] = '\0';
+	free(*a);
+	return (*a = NULL, result);
 }
