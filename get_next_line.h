@@ -6,18 +6,18 @@
 /*   By: vimafra- <vimafra-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/21 13:53:33 by vimafra-          #+#    #+#             */
-/*   Updated: 2025/01/04 15:58:57 by vimafra-         ###   ########.fr       */
+/*   Updated: 2025/01/04 17:38:28 by vimafra-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef GET_NEXT_LINE_H
 # define GET_NEXT_LINE_H
 
-# include <stdio.h>
-# include <unistd.h>
-# include <fcntl.h>
-# include <stdlib.h>
-# include <stddef.h>
+# include <stdio.h> //printf
+# include <unistd.h> //open()
+# include <fcntl.h> //O_RDONLY
+# include <stdlib.h> //malloc()
+# include <stddef.h> //size_t
 
 # ifndef BUFFER_SIZE
 #  define BUFFER_SIZE 42
